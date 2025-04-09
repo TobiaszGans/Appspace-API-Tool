@@ -7,6 +7,7 @@ cert.pem
 # Output files
 *.csv
 *.json
+ErrorDump.txt
 
 
 # Python cache and temp files
