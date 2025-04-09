@@ -1,0 +1,14 @@
+# Secrets
+.env
+
+# Certs
+cert.pem
+
+# Output files
+*.csv
+*.json
+
+
+# Python cache and temp files
+__pycache__/
+*.pyc
