@@ -44,4 +44,6 @@ def main():
     elif scriptSelection == 4:
         changeAutoDeleteSettings(baseUrl)
     os.remove('./cert.pem')
-main()
+
+if __name__ == "__main__":
+    main()
