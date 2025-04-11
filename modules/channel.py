@@ -5,6 +5,7 @@ import requests
 from tqdm import tqdm
 from datetime import datetime
 import pandas as pd
+import streamlit as st
 
 
 def getChannel(channelID, baseUrl) -> str:
@@ -85,58 +86,82 @@ def roundResult(size:int):
         return [calcSize, 'GiB']
 
 def getChannelSize(baseUrl):
-    cls()
-    print('Welcome to get channel size.')
-    ID = input('Please provide channel ID: ')
-    channel = getChannel(ID, baseUrl)
-    ChannelDf = parseChannel(json.dumps(channel))
-    contentDF = extractContentToDf(ChannelDf)
-    global disabledContent
-    global disabledNumber
-    global expiredContent
-    global expiredNumber
-    disabledContent = False
-    disabledNumber = 0
-    expiredContent = False
-    expiredNumber = 0
-    for index, row in contentDF.iterrows():
-        if row['isDisabled'] == True:
-            disabledContent = True
-            disabledNumber = disabledNumber + 1
-        if not row['expiresAt'] == 'None' and datetime.strptime(row['expiresAt'], '%Y-%m-%dT%XZ') < datetime.now():
-            expiredContent = True
-            expiredNumber = expiredNumber + 1
-    if disabledContent or expiredContent:
-        if disabledContent and not expiredContent:
-            warnText = f'There is {disabledNumber} disabled cards in the playlist'
-        elif not disabledContent and expiredContent:
-            warnText = f'There is {expiredNumber} expired cards in the playlist'
-        elif disabledContent and expiredContent:
-            warnText = f'There is {disabledNumber} disabled cards and {expiredNumber} expired cards in the playlist'
-        print('\n' + warnText)
-        disabledCheck = False
-        while disabledCheck is False:
-            includeDisabled =  input('Do you want to include that content in the calculation? (y/n): ')
-            if includeDisabled in ['y','n']:
-                disabledCheck = True
-            else:
-                disabledCheck = False
-        if includeDisabled == 'n':
-            for index, row in contentDF.iterrows():
-                if not row['expiresAt'] == 'None' and datetime.strptime(row['expiresAt'], '%Y-%m-%dT%XZ') < datetime.now():
-                    contentDF = contentDF.drop([index], axis = 0)
-                elif row['isDisabled'] == True:
-                    contentDF = contentDF.drop([index], axis = 0)
-    contentIDs = contentDF['contentID'].tolist()
-    totalSize = calculateSize(contentIDs, baseUrl)
-    displaySize = roundResult(totalSize)
-    if errorItems:
-        if errorNumber == 1:
-            errorString = 'was 1 element'
-            errorString2 = 'This item was'
-        else:
-            errorString = f'were {errorNumber} elements'
-            errorString2 = 'These items were'
+    st.write('Welcome to get channel size.')
+    ID = st.text_input('Please provide channel ID: ')
+    proceed = st.button('Submit')
+    if proceed:
+        channel = getChannel(ID, baseUrl)
+        ChannelDf = parseChannel(json.dumps(channel))
+        contentDF = extractContentToDf(ChannelDf)
+        global disabledContent
+        global disabledNumber
+        global expiredContent
+        global expiredNumber
+        disabledContent = False
+        disabledNumber = 0
+        expiredContent = False
+        expiredNumber = 0
+        for index, row in contentDF.iterrows():
+            if row['isDisabled'] == True:
+                disabledContent = True
+                disabledNumber = disabledNumber + 1
+            if not row['expiresAt'] == 'None' and datetime.strptime(row['expiresAt'], '%Y-%m-%dT%XZ') < datetime.now():
+                expiredContent = True
+                expiredNumber = expiredNumber + 1
+        if disabledContent or expiredContent:
+            if disabledContent and not expiredContent:
+                warnText = f'There is {disabledNumber} disabled cards in the playlist'
+                includeMenu = ["Yes","No"]
+                includeOptions =["Will include all enabled and disabled card in the calculation", 
+                                 "Will only calculate channel size based on enabled cards"]
+            elif not disabledContent and expiredContent:
+                warnText = f'There is {expiredNumber} expired cards in the playlist'
+                includeMenu = ["Yes","No"]
+                includeOptions =["Will include all enabled and expired card in the calculation", 
+                                 "Will only calculate channel size based on enabled cards"]
+            elif disabledContent and expiredContent:
+                warnText = f'There is {disabledNumber} disabled cards and {expiredNumber} expired cards in the playlist'
+                includeMenu = ["Yes","No", "Expired Only", "Disabled Only"]
+                includeOptions =["Will include all enabled and expired card in the calculation", 
+                                 "Will only calculate channel size based on enabled cards", 
+                                 "Will include all enabled and expired card in the calculation",
+                                 "Will include all enabled and disabled card in the calculation"]
+            st.write('\n' + warnText)
+            
+            includeCheck = st.radio(
+                "Do you want to include that content in the calculation?",
+                options= includeMenu,
+                captions= includeOptions,
+                index=None
+            )
+            if includeCheck == None:
+                lockProceed = True
+            if st.button("Continue", disabled=lockProceed):
+                if includeCheck == "No":
+                    for index, row in contentDF.iterrows():
+                        if not row['expiresAt'] == 'None' and datetime.strptime(row['expiresAt'], '%Y-%m-%dT%XZ') < datetime.now():
+                            contentDF = contentDF.drop([index], axis = 0)
+                        elif row['isDisabled'] == True:
+                            contentDF = contentDF.drop([index], axis = 0)
+                elif includeCheck == "Expired Only":
+                    for index, row in contentDF.iterrows():
+                        if row['isDisabled'] == True:
+                            contentDF = contentDF.drop([index], axis = 0)
+                elif includeCheck == "Disabled Only":
+                    for index, row in contentDF.iterrows():
+                        if not row['expiresAt'] == 'None' and datetime.strptime(row['expiresAt'], '%Y-%m-%dT%XZ') < datetime.now():
+                            contentDF = contentDF.drop([index], axis = 0)
 
-        print(f'There {errorString} with undetermined size. {errorString2} skipped.')
-    print(f'\nTotal Channel size is {displaySize[0]} {displaySize[1]}')
+                contentIDs = contentDF['contentID'].tolist()
+                totalSize = calculateSize(contentIDs, baseUrl)
+                displaySize = roundResult(totalSize)
+                if errorItems:
+                    if errorNumber == 1:
+                        errorString = 'was 1 element'
+                        errorString2 = 'This item was'
+                    else:
+                        errorString = f'were {errorNumber} elements'
+                        errorString2 = 'These items were'
+
+                    st.write(f'There {errorString} with undetermined size. {errorString2} skipped.')
+                st.write(f'\nTotal Channel size is {displaySize[0]} {displaySize[1]}')

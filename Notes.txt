@@ -1,0 +1,29 @@
+Have an initial dropdown for options.
+
+Fetures to adapt:
+Main:
+    - Correct script selection ✅
+
+Channels:
+    - txt field to input channel ID ✅
+    - Disabled card check handling
+    - explore: length consitency for channel IDs
+    - error handling for incorrect ID
+    - channel size tqdm bar to streamlit loading bar
+    - channel size to output to streamlit instead of console
+Reservations:
+    - txt input for resouce ID/IDs
+    - tqdm bar to streamlit
+    - error handling for incorrect ID
+    - Display the Reservations in streamlit
+    - if autocancel is there, allow to switch
+    - download buttons instead of console name
+Get libraries:
+    - tqdm bar to streamlit
+    - Display list in streamlit
+    - download button
+changeAutoDeleteSettings:
+    - Upload file
+    - Dropdown or button select
+    - tqdm bar to streamlit
+    - Display errors in streamlit
