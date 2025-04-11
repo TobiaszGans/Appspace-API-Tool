@@ -43,8 +43,11 @@ def getLibraries(baseUrl):
         fullJson = json.loads(response.text)["items"]
     userGroupsDf = pd.json_normalize(fullJson)
     librariesDf = userGroupsDf.loc[userGroupsDf['isLibraryEnabled'] == True].reset_index()[['id', 'name']]
-    print('Saving groups with libraries to LibraryGroups.csv')
-    librariesDf.to_csv('LibraryGroups.csv')
+    outputName = input('\nPlease provide the name for the output CSV file: ')
+    if outputName[-4:] != '.csv':
+        outputName = outputName + '.csv'
+    print(f'Saving groups with libraries to {outputName}')
+    librariesDf.to_csv(outputName)
 
 def changeAutoDeleteSettings(baseUrl):
     cls()
