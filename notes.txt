@@ -14,9 +14,46 @@ input modules will probably need to be separate for both GUI and CLI versions, b
 
 Progress notes on modules:
 __init__ - 
-auth.py - no user interaction, therefore no changes required
+auth.py - no user interaction, need to add option to use cert or no ✔
 channel.py - User interactive functions: getChannelSize - this function also contains a lot of additional checks and calculations, therefore will need to be split.
 libraries.py - User interactive functions: changeAutoDeleteSettings, getLibraries. getLibraries is fairly short and selfcontained and will not require a lot of work. changeAutoDeleteSettings on the other hand does a lot of things.
 reservations.py - User interactive functions: getBookingHistory - requires datetimes, resource IDs, and and confirmations, validateDateTime - this one could be as is for CLI functions, maybe will move it to a CLIutils module.
 sslUtils.py - no user interaction, therefore no changes required - more a check in code to ask user if it is required - maybe have a setup to save preference.
-utils.py - no user interaction, therefore no changes required
+utils.py - no user interaction, therefore no changes required ✔
+
+Functions:
+Channel:
+getChannel: gets a response with content for the channel - removed all print statements - no user input, but renaming to getChannelInfo
+
+parseChannel: Turns the response into a data frame - no input
+
+extractContentToDf: Filters the DF down to include content IDs, and if they're enabled or expired - no input
+
+requestContent: requests information on  a single piece of content, returns a full json - no user input
+
+calculateSize: downloads content for all items in IDlist in a loop, finds the value for size and adds it to a list, handles errors and adds the error to global list and variable, sums the values in the list. - will need to handle TQDM for CLI and streamlit for GUI
+
+roundResult: rounds the resulting sum and presents it in a human readable format using the nearest correct factor. - no user input
+
+getChannelSize: The main function in this module. User input required. Function performs checks etc that could be delegated to a different function. - Will require most work
+
+getChannelSize - high level functionality:
+Welcome text
+Request for channel ID
+ask if custom cert is to be used (will need to delegate it earlier)
+call getBearer
+call getChannelInfo (Return JSON with response)
+call parseChannel (Return a complete data frame)
+call extractContentToDf (Returns a filtered Df)
+initialize global lists and variables for expired and disabled content
+Within the function:            ###This can be a separate function or couple functions###
+    Analyze the filtered Df for disabled or expired content and count it
+    User input on if the disabled/expired content should be counted
+        Input validation
+    If user doesn't want to include the content
+        Remove content IDs from Df
+Turn Df["contentID"] To a list
+call calculateSize(pass the list, returns an int)
+call roundResult(Returns readable string)
+If errors were encountered in calculateSize - Inform the user
+Print total channel size
