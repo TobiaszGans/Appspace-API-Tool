@@ -1,0 +1,22 @@
+Abandoning the streamlited branch. For my vision to work properly, I will need to refactor the codebase.
+Goal: Have two versions of the tool: CLI and GUI (Streamlit)
+
+First steps:
+1. Refactor the modules and functions to perform actions and not perform any user input (Unless it's input validation for CLI)
+2. Create a CLI.py - a version handling user inputs only.
+3. Create GUI.py - a version handling GUI user inputs.
+These two files should be feature equivalent.
+4. Make Cert generation optional, as it is only required for company computers using VPNs with cert override.
+
+input modules will probably need to be separate for both GUI and CLI versions, but I'd like to keep as much of the data processing as common functions as possible.
+
+
+
+Progress notes on modules:
+__init__ - 
+auth.py - no user interaction, therefore no changes required
+channel.py - User interactive functions: getChannelSize - this function also contains a lot of additional checks and calculations, therefore will need to be split.
+libraries.py - User interactive functions: changeAutoDeleteSettings, getLibraries. getLibraries is fairly short and selfcontained and will not require a lot of work. changeAutoDeleteSettings on the other hand does a lot of things.
+reservations.py - User interactive functions: getBookingHistory - requires datetimes, resource IDs, and and confirmations, validateDateTime - this one could be as is for CLI functions, maybe will move it to a CLIutils module.
+sslUtils.py - no user interaction, therefore no changes required - more a check in code to ask user if it is required - maybe have a setup to save preference.
+utils.py - no user interaction, therefore no changes required
