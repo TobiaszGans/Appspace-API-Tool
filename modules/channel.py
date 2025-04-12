@@ -17,7 +17,7 @@ def getChannel(channelID, baseUrl) -> str:
     fullURL = baseUrl + command
     print(fullURL)
     print('Getting Channel info...')
-    response = requests.get(url=fullURL, headers=headers, verify='cert.pem')
+    response = requests.get(url=fullURL, headers=headers)#, verify='cert.pem')
     responseJson = json.loads(response.text)
     return responseJson
 
@@ -26,7 +26,7 @@ def parseChannel(channelJSON):
     channelDf = pd.json_normalize(data["items"])
     return channelDf
 
-def extractContentToDf(df) -> list:
+def extractContentToDf(df):
     contentIds = df['contentId'].tolist()
     contentDisabled = df['disabled'].tolist()
     try:
@@ -50,7 +50,7 @@ def requestContent(contentID, bearer, baseUrl):
             "authorization": bearer}
     command = 'libraries/contents/'
     fullURL = baseUrl + command + contentID
-    response = requests.get(url=fullURL, headers=headers, verify='cert.pem')
+    response = requests.get(url=fullURL, headers=headers)#, verify='cert.pem')
     responseJson = json.loads(response.text)
     return responseJson
 
@@ -63,7 +63,7 @@ def calculateSize(IDlist, baseUrl) -> int:
     errorNumber = 0
     for i in tqdm(IDlist, desc='Downloading Content info'):
         try:
-            contentData = requestContent(i,bearer)
+            contentData = requestContent(i,bearer,baseUrl)
             size = contentData['size']
             sizeList.append(size)
         except:

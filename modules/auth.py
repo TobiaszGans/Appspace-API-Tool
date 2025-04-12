@@ -10,7 +10,7 @@ def loadCredentials() -> list:
 
 def getBearer(baseUrl) -> str:
     credentials = loadCredentials()
-    apiUrl = baseUrl +'/authorization/token'
+    apiUrl = baseUrl +'authorization/token'
     authHeaders = {'Content-Type': "application/json"}
     authBody = {
         "subjectType":"Application",
@@ -18,8 +18,9 @@ def getBearer(baseUrl) -> str:
         "grantType":"refreshToken",
         "refreshToken": credentials[1]
     }
-    initResponse = requests.post(url = apiUrl, headers=authHeaders, json = authBody, verify= 'cert.pem')
-    
+    #initResponse = requests.post(url = apiUrl, headers=authHeaders, json = authBody, verify= 'cert.pem')
+    #Disable cert.pem for test
+    initResponse = requests.post(url = apiUrl, headers=authHeaders, json = authBody)
     
     divideResponse = initResponse.text.split()
     bearer = "Bearer " + divideResponse[2].replace('"','')

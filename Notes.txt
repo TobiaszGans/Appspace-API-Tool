@@ -27,3 +27,6 @@ changeAutoDeleteSettings:
     - Dropdown or button select
     - tqdm bar to streamlit
     - Display errors in streamlit
+
+It looks like there is an issue with cert.pem when on a non work computer
+53-
