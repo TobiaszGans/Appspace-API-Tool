@@ -1,5 +1,6 @@
 # Secrets
 .env
+channel.txt
 
 # Certs
 cert.pem
