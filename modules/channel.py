@@ -85,19 +85,29 @@ def roundResult(size:int):
         calcSize = round(size/1073741824, 2)
         return [calcSize, 'GiB']
 
-def getDisabledInfo(contentDF):
-    expiredNumber = 0
-    disabledNumber = 0
-    disabledContent = False
-    expiredContent = False
-    for index, row in contentDF.iterrows():
-        if row['isDisabled'] == True:
-            disabledContent = True
-            disabledNumber = disabledNumber + 1
-        if not row['expiresAt'] == 'None' and datetime.strptime(row['expiresAt'], '%Y-%m-%dT%XZ') < datetime.now():
-            expiredContent = True
-            expiredNumber = expiredNumber + 1
-    return [disabledContent, disabledNumber, expiredContent, expiredNumber]
+class disabledInfo:
+    def __init__(self, disabledContent, disabledNumber, expiredContent, expiredNumber):
+        self.disabledContent = disabledContent
+        self.disabledNumber = disabledNumber
+        self.expiredContent = expiredContent
+        self.expiredNumber = expiredNumber
+    
+    @classmethod
+    def fromDf(cls, contentDF):
+        expiredNumber = 0
+        disabledNumber = 0
+        disabledContent = False
+        expiredContent = False
+        for index, row in contentDF.iterrows():
+            if row['isDisabled'] == True:
+                disabledContent = True
+                disabledNumber = disabledNumber + 1
+            if not row['expiresAt'] == 'None' and datetime.strptime(row['expiresAt'], '%Y-%m-%dT%XZ') < datetime.now():
+                expiredContent = True
+                expiredNumber = expiredNumber + 1
+        return cls(disabledContent, disabledNumber, expiredContent, expiredNumber)
+
+        
 
 def FilterIdFrame(contentDF, option:int):
     if option == 2:
@@ -135,18 +145,18 @@ def getChannelSize(baseUrl):
     channel = getChannelInfo(ID, baseUrl, bearer, customCert)
     ChannelDf = parseChannel(json.dumps(channel))
     contentDF = extractContentToDf(ChannelDf)
-    disabled = getDisabledInfo(contentDF)
-    if disabled[0] or disabled[2]:
-        if disabled[0] and not disabled[2]:
-            warnText = f'There is {disabled[1]} disabled cards in the playlist'
-        elif not disabled[0] and disabled[2]:
-            warnText = f'There is {disabled[3]} expired cards in the playlist'
-        elif disabled[0] and disabled[2]:
-            warnText = f'There is {disabled[1]} disabled cards and {disabled[3]} expired cards in the playlist'
+    disabled = disabledInfo.fromDf(contentDF)
+    if disabled.disabledContent or disabled.expiredContent:
+        if disabled.disabledContent and not disabled.expiredContent:
+            warnText = f'There is {disabled.disabledNumber} disabled cards in the playlist.'
+        elif not disabled.disabledContent and disabled.expiredContent:
+            warnText = f'There is {disabled.expiredNumber} expired cards in the playlist.'
+        elif disabled.disabledContent and disabled.expiredContent:
+            warnText = f'There is {disabled.expiredNumber} disabled cards and {disabled.expiredNumber} expired cards in the playlist.'
         print('\n' + warnText)
         disabledCheck = False
         while disabledCheck is False:
-            includeDisabled = input('''Do you want to include that content in the calculation?
+            includeDisabled = input('''Do you want to include that content in the calculation?:
 1. Yes
 2. No
 3. Expired Only
