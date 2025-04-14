@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from modules import generateCert, cls, getChannelSize, getBookingHistory, getLibraries, changeAutoDeleteSettings
+from modules import generateCert, cls, CLIgetChannelSize, getBookingHistory, getLibraries, changeAutoDeleteSettings
 
 
 def selectScript():
@@ -36,7 +36,7 @@ def main():
     generateCert(apiUrl)
     #Add selections when expanding script
     if scriptSelection == 1:
-        getChannelSize(baseUrl)
+        CLIgetChannelSize(baseUrl)
     elif scriptSelection == 2:
         getBookingHistory(baseUrl)
     elif scriptSelection == 3:

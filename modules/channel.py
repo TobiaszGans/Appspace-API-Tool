@@ -5,7 +5,7 @@ import requests
 from tqdm import tqdm
 from datetime import datetime
 import pandas as pd
-
+import streamlit as st
 
 def getChannelInfo(channelID:str, baseUrl:str, bearer:str, customCert:bool) -> str:
     headers = {
@@ -55,38 +55,68 @@ def requestContent(contentID:str, bearer:str, baseUrl:str, customCert:bool):
     responseJson = json.loads(response.text)
     return responseJson
 
-def calculateSize(IDlist, baseUrl, bearer, customCert:bool) -> list:
-    sizeList = []
-    global errorItems
-    global errorNumber
-    errorItems = False
-    errorNumber = 0
-    for i in tqdm(IDlist, desc='Downloading Content info'):
-        try:
-            contentData = requestContent(i,bearer, baseUrl, customCert=customCert)
-            size = contentData['size']
-            sizeList.append(size)
-        except:
-            errorItems = True
-            errorNumber = errorNumber + 1
-    totalSize = sum(sizeList)
-    return [totalSize, errorItems, errorNumber]
+class sizeCalculator:
+    def __init__(self, totalSize, errorItems, errorNumber):
+        self.totalSize = totalSize
+        self.errorItems = errorItems
+        self.errorNumber = errorNumber
 
-def roundResult(size:int):
-    if size < 1024:
-        return [size, 'Bytes']
-    elif 1024 <= size < 1048576:
-        calcSize = round(size/1024, 2)
-        return [calcSize, 'KiB']
-    elif 1048576 <= size < 1073741824:
-        calcSize = round(size/1048576, 2)
-        return [calcSize, 'MiB']
-    else:
-        calcSize = round(size/1073741824, 2)
-        return [calcSize, 'GiB']
+    @classmethod
+    def CLI(cls, IDlist:str, baseUrl:str, bearer:str, customCert:bool):
+        from tqdm import tqdm
+        sizeList = []
+        errorItems = False
+        errorNumber = 0
+
+        for i in tqdm(IDlist, desc='Downloading Content info'):
+            try:
+                contentData = requestContent(i, bearer, baseUrl, customCert=customCert)
+                sizeList.append(int(contentData['size']))
+            except:
+                errorItems = True
+                errorNumber += 1
+        summary = sum(sizeList)
+        return cls(totalSize = summary, errorItems = errorItems, errorNumber = errorNumber)
+    
+    @classmethod
+    def GUI(cls, IDlist, baseUrl, bearer, st, customCert=False):
+        sizeList = []
+        errorItems = False
+        errorNumber = 0
+        progressBar = st.progress(0)
+
+        for idx, i in enumerate(IDlist):
+            try:
+                contentData = requestContent(i, bearer, baseUrl, customCert=customCert)
+                sizeList.append(contentData['size'])
+            except:
+                errorItems = True
+                errorNumber += 1
+            progressBar.progress((idx + 1) / len(IDlist))
+        totalSize = sum(sizeList)
+        return cls(totalSize, errorItems, errorNumber)
+
+class roundResult:
+    def __init__(self, number, unit):
+        self.number = number
+        self.unit = unit
+
+    @classmethod
+    def calculate(cls, size:int):
+        if size < 1024:
+            return cls(number = size, unit ='Bytes')
+        elif 1024 <= size < 1048576:
+            calcSize = round(size/1024, 2)
+            return cls(number = calcSize, unit ='KiB')
+        elif 1048576 <= size < 1073741824:
+            calcSize = round(size/1048576, 2)
+            return cls(number = calcSize, unit ='MiB')
+        else:
+            calcSize = round(size/1073741824, 2)
+            return cls(number = calcSize, unit ='GiB')
 
 class disabledInfo:
-    def __init__(self, disabledContent, disabledNumber, expiredContent, expiredNumber):
+    def __init__(self, disabledContent:bool, disabledNumber:int, expiredContent:bool, expiredNumber:int):
         self.disabledContent = disabledContent
         self.disabledNumber = disabledNumber
         self.expiredContent = expiredContent
@@ -107,7 +137,6 @@ class disabledInfo:
                 expiredNumber = expiredNumber + 1
         return cls(disabledContent, disabledNumber, expiredContent, expiredNumber)
 
-        
 
 def FilterIdFrame(contentDF, option:int):
     if option == 2:
@@ -126,7 +155,7 @@ def FilterIdFrame(contentDF, option:int):
                 contentDF = contentDF.drop([index], axis = 0)
     return contentDF
 
-def getChannelSize(baseUrl):
+def CLIgetChannelSize(baseUrl):
     cls()
     print('Welcome to get channel size.')
     ID = input('Please provide channel ID: ')
@@ -169,15 +198,15 @@ Selection: ''')
         if includeDisabled in ['2','3','4']:
             contentDF = FilterIdFrame(contentDF=contentDF, option=int(includeDisabled))
     contentIDs = contentDF['contentID'].tolist()
-    totalSize = calculateSize(contentIDs, baseUrl, bearer=bearer, customCert=customCert)
-    displaySize = roundResult(totalSize[0])
-    if totalSize[1]:
-        if totalSize[2] == 1:
+    contentSize = sizeCalculator.CLI(contentIDs, baseUrl, bearer=bearer, customCert=customCert)
+    displaySize = roundResult.calculate(contentSize.totalSize)
+    if contentSize.errorItems:
+        if contentSize.errorNumber == 1:
             errorString = 'was 1 element'
             errorString2 = 'This item was'
         else:
-            errorString = f'were {totalSize[2]} elements'
+            errorString = f'were {contentSize.errorNumber} elements'
             errorString2 = 'These items were'
 
         print(f'There {errorString} with undetermined size. {errorString2} skipped.')
-    print(f'\nTotal Channel size is {displaySize[0]} {displaySize[1]}')
+    print(f'\nTotal Channel size is {displaySize.number} {displaySize.unit}')

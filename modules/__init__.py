@@ -1,7 +1,7 @@
 from .sslUtils import generateCert
 from .utils import cls
 from .auth import getBearer
-from .channel import getChannelSize
+from .channel import CLIgetChannelSize
 from .reservations import getBookingHistory
 from .libraries import getLibraries, changeAutoDeleteSettings
 #from .reservations import getBookingHistory
@@ -11,7 +11,7 @@ __all__ = [
     "generateCert",
     "cls",
     "getBearer",
-    "getChannelSize",
+    "CLIgetChannelSize",
     "getBookingHistory",
     "getLibraries",
     "changeAutoDeleteSettings"
