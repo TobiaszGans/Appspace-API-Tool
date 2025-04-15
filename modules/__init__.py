@@ -1,9 +1,10 @@
 from .sslUtils import generateCert
 from .utils import clearTerminal
 from .auth import getBearer
-from .channel import CLIgetChannelSize
+from .channel import CLIgetChannelSize, GUIgetChannelSize
 from .reservations import CLIgetBookingHistory
 from .libraries import CLIgetLibraries, CLIchangeAutoDeleteSettings
+from .guiUtils import shutdown
 
 __all__ = [
     "generateCert",
@@ -13,4 +14,6 @@ __all__ = [
     "CLIgetBookingHistory",
     "CLIgetLibraries",
     "CLIchangeAutoDeleteSettings"
+    "shutdown",
+    "GUIgetChannelSize"    
 ]

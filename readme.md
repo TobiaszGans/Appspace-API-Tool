@@ -12,11 +12,11 @@ This Python script provides a command-line interface to interact with the Appspa
 ### 2. Get Booking History
 - Retrieve reservation history for one or multiple Appspace resources.
 - Supports filtering by time range and detects auto-released (no-show) meetings.
-- Exports all results to `Output.csv` and optionally auto-cancels to `AutoRelease.csv`.
+- Exports all results to a csv file and optionally auto-cancels to a separate csv file.
 
 ### 3. Get Libraries
 - Lists user groups with enabled library settings.
-- Outputs the result to `LibraryGroups.csv`.
+- Outputs the result to a csv file.
 
 ### 4. Change Auto-Delete Settings
 - Batch update content expiry policies for libraries based on a CSV input.

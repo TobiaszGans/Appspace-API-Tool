@@ -2,7 +2,6 @@ from dotenv import load_dotenv
 import os
 from modules import generateCert, clearTerminal, CLIgetChannelSize, CLIgetBookingHistory, CLIgetLibraries, CLIchangeAutoDeleteSettings
 
-
 def selectScript():
     print('Welcome to the Appspace API interaction tool. Please select required script.')
     menuTxt =[
@@ -45,5 +44,4 @@ def main():
         CLIchangeAutoDeleteSettings(baseUrl)
     os.remove('./cert.pem')
 
-if __name__ == "__main__":
-    main()
+main()

@@ -200,3 +200,48 @@ Selection: ''')
 
         print(f'There {errorString} with undetermined size. {errorString2} skipped.')
     print(f'\nTotal Channel size is {displaySize.number} {displaySize.unit}')
+
+def GUIgetChannelSize(baseUrl):
+    st.title('Welcome to get channel size.')
+    ID = st.text_input('Please provide channel ID: ')
+    customCert = certChoice()
+    bearer = getBearer(baseUrl, customCert=customCert)
+    channel = getChannelInfo(ID, baseUrl, bearer, customCert)
+    ChannelDf = parseChannel(json.dumps(channel))
+    contentDF = extractContentToDf(ChannelDf)
+    disabled = disabledInfo.fromDf(contentDF)
+    if disabled.disabledContent or disabled.expiredContent:
+        if disabled.disabledContent and not disabled.expiredContent:
+            warnText = f'There is {disabled.disabledNumber} disabled cards in the playlist.'
+        elif not disabled.disabledContent and disabled.expiredContent:
+            warnText = f'There is {disabled.expiredNumber} expired cards in the playlist.'
+        elif disabled.disabledContent and disabled.expiredContent:
+            warnText = f'There is {disabled.expiredNumber} disabled cards and {disabled.expiredNumber} expired cards in the playlist.'
+        print('\n' + warnText)
+        disabledCheck = False
+        while disabledCheck is False:
+            includeDisabled = input('''Do you want to include that content in the calculation?:
+1. Yes
+2. No
+3. Expired Only
+4. Disabled Only
+Selection: ''')
+            if includeDisabled in ['1','2','3','4']:
+                disabledCheck = True
+            else:
+                disabledCheck = False
+        if includeDisabled in ['2','3','4']:
+            contentDF = FilterIdFrame(contentDF=contentDF, option=int(includeDisabled))
+    contentIDs = contentDF['contentID'].tolist()
+    contentSize = sizeCalculator.CLI(contentIDs, baseUrl, bearer=bearer, customCert=customCert)
+    displaySize = roundResult.calculate(contentSize.totalSize)
+    if contentSize.errorItems:
+        if contentSize.errorNumber == 1:
+            errorString = 'was 1 element'
+            errorString2 = 'This item was'
+        else:
+            errorString = f'were {contentSize.errorNumber} elements'
+            errorString2 = 'These items were'
+
+        print(f'There {errorString} with undetermined size. {errorString2} skipped.')
+    print(f'\nTotal Channel size is {displaySize.number} {displaySize.unit}')
