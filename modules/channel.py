@@ -1,8 +1,7 @@
 from .auth import getBearer
-from .utils import cls
+from .utils import clearTerminal, certChoice
 import json
 import requests
-from tqdm import tqdm
 from datetime import datetime
 import pandas as pd
 import streamlit as st
@@ -157,20 +156,10 @@ def FilterIdFrame(contentDF, option:int):
     return contentDF
 
 def CLIgetChannelSize(baseUrl):
-    cls()
+    clearTerminal()
     print('Welcome to get channel size.')
     ID = input('Please provide channel ID: ')
-    certChoiceValid = False
-    while not certChoiceValid:
-        certChoice = input("Use custom cert? (y/n): ")
-        if certChoice == 'y':
-            customCert = True
-            certChoiceValid = True
-        elif certChoice == 'n':
-            customCert = False
-            certChoiceValid = True
-        else:
-            certChoiceValid = False
+    customCert = certChoice()
     bearer = getBearer(baseUrl, customCert=customCert)
     channel = getChannelInfo(ID, baseUrl, bearer, customCert)
     ChannelDf = parseChannel(json.dumps(channel))

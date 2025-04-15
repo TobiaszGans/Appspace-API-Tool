@@ -1,18 +1,16 @@
 from .sslUtils import generateCert
-from .utils import cls
+from .utils import clearTerminal
 from .auth import getBearer
 from .channel import CLIgetChannelSize
-from .reservations import getBookingHistory
-from .libraries import getLibraries, changeAutoDeleteSettings
-#from .reservations import getBookingHistory
-#from .channel import getChannelSize
+from .reservations import CLIgetBookingHistory
+from .libraries import CLIgetLibraries, CLIchangeAutoDeleteSettings
 
 __all__ = [
     "generateCert",
-    "cls",
+    "clearTerminal",
     "getBearer",
     "CLIgetChannelSize",
-    "getBookingHistory",
-    "getLibraries",
-    "changeAutoDeleteSettings"
+    "CLIgetBookingHistory",
+    "CLIgetLibraries",
+    "CLIchangeAutoDeleteSettings"
 ]

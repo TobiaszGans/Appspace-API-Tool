@@ -21,8 +21,7 @@ reservations.py - User interactive functions: getBookingHistory - requires datet
 sslUtils.py - no user interaction, therefore no changes required - more a check in code to ask user if it is required - maybe have a setup to save preference.
 utils.py - no user interaction, therefore no changes required ✔
 
-Functions:
-Channel:
+Functions - Channel:
 getChannel: gets a response with content for the channel - removed all print statements - no user input, but renaming to getChannelInfo
 
 parseChannel: Turns the response into a data frame - no input
@@ -31,11 +30,12 @@ extractContentToDf: Filters the DF down to include content IDs, and if they're e
 
 requestContent: requests information on  a single piece of content, returns a full json - no user input
 
-calculateSize: downloads content for all items in IDlist in a loop, finds the value for size and adds it to a list, handles errors and adds the error to global list and variable, sums the values in the list. - will need to handle TQDM for CLI and streamlit for GUI
+calculateSize: downloads content for all items in IDlist in a loop, finds the value for size and adds it to a list, handles errors and adds the error to global list and variable, sums the values in the list. - will need to handle TQDM for CLI and streamlit for GUI - Made a dataclass that will work with streamlit and cli.
 
 roundResult: rounds the resulting sum and presents it in a human readable format using the nearest correct factor. - no user input
 
-getChannelSize: The main function in this module. User input required. Function performs checks etc that could be delegated to a different function. - Will require most work
+getChannelSize: The main function in this module. User input required. Function performs checks etc that could be delegated to a different function. - Will require most work - Made it into CLI exclusive function
+
 
 getChannelSize - high level functionality:
 Welcome text
@@ -57,3 +57,10 @@ call calculateSize(pass the list, returns an int)
 call roundResult(Returns readable string)
 If errors were encountered in calculateSize - Inform the user
 Print total channel size
+
+
+Required changes/adjustments
+channel.py - create a GUI function only once CLI is finished
+libraries.py - to change: create a GUI function only once CLI is finished
+reservations.py - User interactive functions: refactor getBookingHistory
+__init__ - Once modules are ready, package it.

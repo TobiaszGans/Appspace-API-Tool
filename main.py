@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 import os
-from modules import generateCert, cls, CLIgetChannelSize, getBookingHistory, getLibraries, changeAutoDeleteSettings
+from modules import generateCert, clearTerminal, CLIgetChannelSize, CLIgetBookingHistory, CLIgetLibraries, CLIchangeAutoDeleteSettings
 
 
 def selectScript():
@@ -27,7 +27,7 @@ def selectScript():
     return int(selection)      
 
 def main():
-    cls()
+    clearTerminal()
     load_dotenv()
     subdomain = os.getenv('subdomain')
     baseUrl = f'https://{subdomain}.cloud.appspace.com/api/v3/'
@@ -38,11 +38,11 @@ def main():
     if scriptSelection == 1:
         CLIgetChannelSize(baseUrl)
     elif scriptSelection == 2:
-        getBookingHistory(baseUrl)
+        CLIgetBookingHistory(baseUrl)
     elif scriptSelection == 3:
-        getLibraries(baseUrl)
+        CLIgetLibraries(baseUrl)
     elif scriptSelection == 4:
-        changeAutoDeleteSettings(baseUrl)
+        CLIchangeAutoDeleteSettings(baseUrl)
     os.remove('./cert.pem')
 
 if __name__ == "__main__":
