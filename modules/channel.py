@@ -6,6 +6,7 @@ from tqdm import tqdm
 from datetime import datetime
 import pandas as pd
 import streamlit as st
+from dataclasses import dataclass
 
 def getChannelInfo(channelID:str, baseUrl:str, bearer:str, customCert:bool) -> str:
     headers = {
@@ -55,11 +56,11 @@ def requestContent(contentID:str, bearer:str, baseUrl:str, customCert:bool):
     responseJson = json.loads(response.text)
     return responseJson
 
+@dataclass
 class sizeCalculator:
-    def __init__(self, totalSize, errorItems, errorNumber):
-        self.totalSize = totalSize
-        self.errorItems = errorItems
-        self.errorNumber = errorNumber
+    totalSize: int
+    errorItems: bool
+    errorNumber: int
 
     @classmethod
     def CLI(cls, IDlist:str, baseUrl:str, bearer:str, customCert:bool):
@@ -96,10 +97,10 @@ class sizeCalculator:
         totalSize = sum(sizeList)
         return cls(totalSize, errorItems, errorNumber)
 
+@dataclass
 class roundResult:
-    def __init__(self, number, unit):
-        self.number = number
-        self.unit = unit
+    number: int
+    unit: str
 
     @classmethod
     def calculate(cls, size:int):
@@ -115,12 +116,12 @@ class roundResult:
             calcSize = round(size/1073741824, 2)
             return cls(number = calcSize, unit ='GiB')
 
+@dataclass
 class disabledInfo:
-    def __init__(self, disabledContent:bool, disabledNumber:int, expiredContent:bool, expiredNumber:int):
-        self.disabledContent = disabledContent
-        self.disabledNumber = disabledNumber
-        self.expiredContent = expiredContent
-        self.expiredNumber = expiredNumber
+    disabledContent: bool
+    disabledNumber: int
+    expiredContent: bool
+    expiredNumber: int
     
     @classmethod
     def fromDf(cls, contentDF):
