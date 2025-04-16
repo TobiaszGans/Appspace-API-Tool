@@ -111,6 +111,17 @@ def CLIgetLibraries(baseUrl):
     finalName = saveDfToCsv(df=librariesDF, fname=outputName)
     print(f'Saved groups with libraries to {finalName}')
     
+##### NOTHING CHANGED YET! #####
+def GUIgetLibraries(baseUrl):
+    clearTerminal()
+    print('Welcome to get Libraries.')
+    customCert = certChoice()
+    print('Authenticating...')
+    bearer = getBearer(baseUrl, customCert=customCert)
+    librariesDF = getLibrariesDF.cli(baseUrl=baseUrl, bearer=bearer, customCert=customCert).librariesdf
+    outputName = input('\nPlease provide the name for the output CSV file: ')
+    finalName = saveDfToCsv(df=librariesDF, fname=outputName)
+    print(f'Saved groups with libraries to {finalName}')
 
 #-----Auto Delete Section-----
 @dataclass
@@ -205,6 +216,83 @@ class deleteMode:
         return cls(deleteType, expiry, duration)
 
 def CLIchangeAutoDeleteSettings(baseUrl):
+    clearTerminal()
+    print('Welcome to Change auto-delete type.')
+    filePathValid = False
+    while not filePathValid:
+        filePath = input('Please enter the file path to your .csv file: ')
+        extention = filePath[-4:]
+        if extention == ".csv":
+            filePathValid = os.path.isfile(filePath)
+            if not filePathValid:
+                print("Could not find the file.")
+        else:
+            print("File must be a .csv file")
+    libraryGroupsDf = pd.read_csv(filePath, index_col=0, encoding='UTF-8')
+    deleteModeMenu =[
+    '1. Auto Delete all Content',
+    '2. Auto Delete unalocated content only',
+    '3. Disable autodelete'
+    ]
+    for item in deleteModeMenu:
+        print(item)
+    selection = input("\nPlease type script number: ")
+    selectionVerify = False
+    while not selectionVerify:
+        try:
+            int(selection)
+            if int(selection) <= len(deleteModeMenu) and int(selection) >= 1:
+                selectionVerify = True
+            else:
+                selection = input("Incorrect number. Please type option number: ")
+        except:
+            selection = input("Incorrect input type. Please type option number: ")
+
+    delete = deleteMode.select(int(selection))
+
+    idList = libraryGroupsDf['id'].tolist()
+    if len(idList) == 1:
+        message = str(len(idList)) + ' library.'
+    else:
+        message  = str(len(idList)) + ' libraries.'
+    print(f'You are about to modify settings for {message}')
+    consentValid = False
+    while not consentValid:
+        consent = input('Are you sure you want to conitnue? (y/n): ')
+        if consent == 'y':
+            consentValid = True
+        elif consent == 'n':
+            consentValid = True
+            print('Aborting.')
+            quit()
+        else:
+            consentValid = False
+    certSelect = certChoice()
+    print('Authenticating.')
+    bearer = getBearer(baseUrl, customCert=certSelect)
+    patch = patchAutodelete.cli(baseUrl=baseUrl, 
+                                duration=delete.duration, 
+                                expiry=delete.expiry, 
+                                deleteType=delete.deleteType, 
+                                bearer=bearer, idList=idList, 
+                                libraryGroupsDf=libraryGroupsDf,
+                                customCert=certSelect)
+    if patch.responseError:
+        print(f'There were {len(patch.errors)} erros during the API call.')
+        saveErrorsValid = False
+        while not saveErrorsValid:
+            saveErrors = input('Do you want to save the responses? (y/n): ')
+            if saveErrors == 'y'or saveErrors == 'n':
+                saveErrorsValid = True
+        if saveErrors == 'y':
+            with open('ErrorDump.txt', 'a', encoding='UTF-8') as file:
+                for log in patch.errors:
+                    file.write(log)
+                print('Saved Errors to ErrorDump.txt')
+
+
+##### NOTHING CHANGED YET! #####
+def GUIchangeAutoDeleteSettings(baseUrl):
     clearTerminal()
     print('Welcome to Change auto-delete type.')
     filePathValid = False

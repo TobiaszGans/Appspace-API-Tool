@@ -161,3 +161,33 @@ def CLIgetBookingHistory(baseUrl):
     outputName = input('\nPlease provide the name for the full output CSV file: ')
     finalName = saveDfToCsv(df=processed.resourceDF, fname=outputName)
     print(f'Saved reservation raport to {finalName}')
+
+##### ALL TO BE CHANGED #####
+def GUIgetBookingHistory(baseUrl):
+    clearTerminal()
+    print('Welcome to get booking history.')
+    resourceID = input('Please enter resource ID/IDs: ')
+    startTime = validateDateTime(input('Please enter start date and time in the following format yyyy-mm-ddThh:mm:ss: ')) + 'Z'
+    endTime = validateDateTime(input('Please enter end time date and time in the following format yyyy-mm-ddThh:mm:ss or type now: ')) + 'Z'
+    certMode = certChoice()
+    print('Authenticating...')
+    bearer = getBearer(baseUrl, customCert=certMode)
+    fullJson = getBookings.cli(bearer=bearer, resourceID=resourceID, startTime=startTime, endTime=endTime, customCert=certMode, baseUrl=baseUrl).fullJson
+    processed = processReservations.process(fullJson)
+    
+    if not processed.autoCancelDF.empty:
+        print('Found Auto released meetings')
+        yesNoVerify = False
+        while not yesNoVerify:
+            saveCancels = input('Would you like to save the Auto Released data points in a separate file? (y/n): ')
+            if saveCancels == 'y':
+                autoOutputName = input('\nPlease provide the name for the auto-release output CSV file: ')
+                autoOutputName = saveDfToCsv(df=processed.autoCancelDF, fname=autoOutputName)
+                print(f'Saved reservation raport to {autoOutputName}')
+                yesNoVerify = True
+            elif saveCancels == 'n':
+                yesNoVerify = True
+    
+    outputName = input('\nPlease provide the name for the full output CSV file: ')
+    finalName = saveDfToCsv(df=processed.resourceDF, fname=outputName)
+    print(f'Saved reservation raport to {finalName}')
