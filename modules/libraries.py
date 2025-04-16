@@ -1,5 +1,6 @@
 from .utils import clearTerminal, certChoice, saveDfToCsv
 from .auth import getBearer
+from .guiUtils import getDefaultCert, updateDefaultCert
 import json
 import pandas as pd
 import requests
@@ -111,17 +112,32 @@ def CLIgetLibraries(baseUrl):
     finalName = saveDfToCsv(df=librariesDF, fname=outputName)
     print(f'Saved groups with libraries to {finalName}')
     
-##### NOTHING CHANGED YET! #####
+def goTo(stage):
+    st.session_state.libraryDownloads = stage
+
 def GUIgetLibraries(baseUrl):
-    clearTerminal()
-    print('Welcome to get Libraries.')
-    customCert = certChoice()
-    print('Authenticating...')
-    bearer = getBearer(baseUrl, customCert=customCert)
-    librariesDF = getLibrariesDF.cli(baseUrl=baseUrl, bearer=bearer, customCert=customCert).librariesdf
-    outputName = input('\nPlease provide the name for the output CSV file: ')
-    finalName = saveDfToCsv(df=librariesDF, fname=outputName)
-    print(f'Saved groups with libraries to {finalName}')
+    #Initialize
+    if 'libraryDownloads' not in st.session_state:
+        st.session_state.libraryDownloads = 'input'
+
+    if st.session_state.libraryDownloads == 'input':
+        st.title('Welcome to get Libraries.')
+        certToggle = st.toggle('Use custom cert?', 
+                               value=getDefaultCert(), 
+                               key='useCustomCert',
+                               on_change=updateDefaultCert)
+        st.session_state.customCert = certToggle
+        st.button('Fetch reservations', on_click= lambda: goTo('download')) 
+
+    elif st.session_state.libraryDownloads == 'download':
+        with st.spinner("Authenticating..."):
+            st.session_state.bearer = getBearer(
+                baseUrl,
+                customCert=st.session_state.customCert
+            )
+        librariesDF = getLibrariesDF.gui(baseUrl=baseUrl, bearer=st.session_state.bearer, customCert=st.session_state.customCert).librariesdf
+        file = librariesDF.to_csv().encode("utf-8")
+        st.download_button('Save file',data = file, file_name='Libraries.csv', mime="text/csv",icon=":material/download:",use_container_width=True)
 
 #-----Auto Delete Section-----
 @dataclass
@@ -291,21 +307,22 @@ def CLIchangeAutoDeleteSettings(baseUrl):
                 print('Saved Errors to ErrorDump.txt')
 
 
-##### NOTHING CHANGED YET! #####
+
 def GUIchangeAutoDeleteSettings(baseUrl):
-    clearTerminal()
-    print('Welcome to Change auto-delete type.')
-    filePathValid = False
-    while not filePathValid:
-        filePath = input('Please enter the file path to your .csv file: ')
-        extention = filePath[-4:]
-        if extention == ".csv":
-            filePathValid = os.path.isfile(filePath)
-            if not filePathValid:
-                print("Could not find the file.")
-        else:
-            print("File must be a .csv file")
-    libraryGroupsDf = pd.read_csv(filePath, index_col=0, encoding='UTF-8')
+    # Initialize input stage
+    if 'resStage' not in st.session_state:
+        st.session_state.libStage = 'input'
+
+    # INPUT STAGE
+    if st.session_state.libStage == 'input':
+        st.title('Welcome to Change auto-delete type.')
+        file = st.file_uploader('Upload CSV file', type='csv')
+    
+    
+    
+    
+    '''
+    libraryGroupsDf = pd.read_csv(file, index_col=0, encoding='UTF-8')
     deleteModeMenu =[
     '1. Auto Delete all Content',
     '2. Auto Delete unalocated content only',
@@ -365,4 +382,4 @@ def GUIchangeAutoDeleteSettings(baseUrl):
             with open('ErrorDump.txt', 'a', encoding='UTF-8') as file:
                 for log in patch.errors:
                     file.write(log)
-                print('Saved Errors to ErrorDump.txt')
+                print('Saved Errors to ErrorDump.txt')'''
