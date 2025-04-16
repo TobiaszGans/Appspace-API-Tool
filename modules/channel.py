@@ -1,5 +1,6 @@
 from .auth import getBearer
 from .utils import clearTerminal, certChoice
+from .guiUtils import updateDefaultCert, getDefaultCert
 import json
 import requests
 from datetime import datetime
@@ -212,7 +213,10 @@ def GUIgetChannelSize(baseUrl):
     # INPUT STAGE
     if st.session_state.channelStage == 'input':
         st.title('Welcome to get channel size.')
-        certToggle = st.toggle('Use custom cert?')
+        certToggle = st.toggle('Use custom cert?', 
+                               value=getDefaultCert(), 
+                               key='useCustomCert',
+                               on_change=updateDefaultCert)
         channelID = st.text_input('Please provide channel ID: ')
         if channelID.strip() == "":
             st.error("Channel ID is required.")

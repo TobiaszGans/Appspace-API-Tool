@@ -19,9 +19,9 @@ def main():
     page_icon="🏠",
 )
     #Shutdown Button
-    c1, c2 = st.columns([4, 1])
+    c1, c2 = st.columns([3, 1])
     with c2:
-        exit = st.button('Exit Application')
+        exit = st.button('Exit Application', use_container_width=True)
         if exit:
             os.remove('./cert.pem')
             shutdown()
@@ -78,10 +78,12 @@ def main():
             GUIgetLibraries(baseUrl=baseUrl)
         elif selectedIndex == 4:
             GUIchangeAutoDeleteSettings(baseUrl=baseUrl)
-
-        if st.button("🔙 Back to Menu"):
-            st.session_state.clear()  # Clears all session state variables
-            st.session_state.step = 'menu'
-            st.session_state.selectedIndex = None
-            st.rerun()
+        
+        cb1, cb2 = st.columns([3, 1])
+        with cb2:
+            if st.button("🔙 Back to Menu", use_container_width=True):
+                st.session_state.clear()  # Clears all session state variables
+                st.session_state.step = 'menu'
+                st.session_state.selectedIndex = None
+                st.rerun()
 main()
