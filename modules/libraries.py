@@ -1,6 +1,6 @@
 from .utils import clearTerminal, certChoice, saveDfToCsv
 from .auth import getBearer
-from .guiUtils import getDefaultCert, updateDefaultCert
+from .guiUtils import getDefaultCert, updateDefaultCert, backToMenuButton, backToMenuAction, backSession, rerun
 import json
 import pandas as pd
 import requests
@@ -116,6 +116,7 @@ def goTo(stage):
     st.session_state.libraryDownloads = stage
 
 def GUIgetLibraries(baseUrl):
+    
     #Initialize
     if 'libraryDownloads' not in st.session_state:
         st.session_state.libraryDownloads = 'input'
@@ -136,8 +137,14 @@ def GUIgetLibraries(baseUrl):
                 customCert=st.session_state.customCert
             )
         librariesDF = getLibrariesDF.gui(baseUrl=baseUrl, bearer=st.session_state.bearer, customCert=st.session_state.customCert).librariesdf
-        file = librariesDF.to_csv().encode("utf-8")
-        st.download_button('Save file',data = file, file_name='Libraries.csv', mime="text/csv",icon=":material/download:",use_container_width=True)
+        st.session_state.file = librariesDF.to_csv().encode("utf-8")
+        if st.session_state.file is not None:
+            goTo('End')
+            rerun()
+
+    elif st.session_state.libraryDownloads == 'End':
+        st.markdown('## The libraries list is ready:')
+        st.download_button('Save file',data = st.session_state.file, file_name='Libraries.csv', mime="text/csv",icon=":material/download:",use_container_width=True)
 
 #-----Auto Delete Section-----
 @dataclass
@@ -191,7 +198,9 @@ Error Message: {response.text}
         errors = []
         responseError = False
         progressBar = st.progress(0)
-        for group in idList:
+        statusText = st.empty()
+        for index, group in enumerate(idList):
+            statusText.text(f'Patching library group... {(index + 1)} of {len(idList)}')
             command = f'users/usergroups/{group}'
             fullUrl = baseUrl + command
             if customCert:
@@ -206,7 +215,7 @@ Error Code: {response.status_code}
 Error Message: {response.text}
                     '''
                 errors.append(errorMessage)
-            progressBar.progress((group + 1) / len(idList))
+            progressBar.progress((index + 1) / len(idList))
         return cls(responseError, errors)
             
 @dataclass
@@ -306,80 +315,112 @@ def CLIchangeAutoDeleteSettings(baseUrl):
                     file.write(log)
                 print('Saved Errors to ErrorDump.txt')
 
-
+def goDelTo(stage):
+    st.session_state.autoDeleteStage = stage
 
 def GUIchangeAutoDeleteSettings(baseUrl):
+        
     # Initialize input stage
-    if 'resStage' not in st.session_state:
-        st.session_state.libStage = 'input'
+    if 'autoDeleteStage' not in st.session_state:
+        st.session_state.autoDeleteStage = 'input'
 
     # INPUT STAGE
-    if st.session_state.libStage == 'input':
+    if st.session_state.autoDeleteStage == 'input':
         st.title('Welcome to Change auto-delete type.')
+        certToggle = st.toggle('Use custom cert?', 
+                               value=getDefaultCert(), 
+                               key='useCustomCert',
+                               on_change=updateDefaultCert)
         file = st.file_uploader('Upload CSV file', type='csv')
-    
-    
-    
-    
-    '''
-    libraryGroupsDf = pd.read_csv(file, index_col=0, encoding='UTF-8')
-    deleteModeMenu =[
-    '1. Auto Delete all Content',
-    '2. Auto Delete unalocated content only',
-    '3. Disable autodelete'
-    ]
-    for item in deleteModeMenu:
-        print(item)
-    selection = input("\nPlease type script number: ")
-    selectionVerify = False
-    while not selectionVerify:
-        try:
-            int(selection)
-            if int(selection) <= len(deleteModeMenu) and int(selection) >= 1:
-                selectionVerify = True
-            else:
-                selection = input("Incorrect number. Please type option number: ")
-        except:
-            selection = input("Incorrect input type. Please type option number: ")
 
-    delete = deleteMode.select(int(selection))
-
-    idList = libraryGroupsDf['id'].tolist()
-    if len(idList) == 1:
-        message = str(len(idList)) + ' library.'
-    else:
-        message  = str(len(idList)) + ' libraries.'
-    print(f'You are about to modify settings for {message}')
-    consentValid = False
-    while not consentValid:
-        consent = input('Are you sure you want to conitnue? (y/n): ')
-        if consent == 'y':
-            consentValid = True
-        elif consent == 'n':
-            consentValid = True
-            print('Aborting.')
-            quit()
+        if file is None:
+            disableContinueButton = True
         else:
-            consentValid = False
-    certSelect = certChoice()
-    print('Authenticating.')
-    bearer = getBearer(baseUrl, customCert=certSelect)
-    patch = patchAutodelete.cli(baseUrl=baseUrl, 
+            disableContinueButton = False
+            st.session_state.groups = file
+            st.session_state.customCert = certToggle
+        st.button('Continue', disabled=disableContinueButton, on_click=lambda: goDelTo('ProcessCSV'))
+    
+    elif st.session_state.autoDeleteStage == 'ProcessCSV':
+        with st.spinner('Importing...'):
+            libraryGroupsDf = pd.read_csv(st.session_state.groups, index_col=0, encoding='UTF-8')
+            libraryGroupsDf = libraryGroupsDf.dropna()
+            idList = libraryGroupsDf['id'].tolist()
+            st.session_state.idList = idList
+            st.session_state.libraryGroupsDf = libraryGroupsDf
+            if len(idList) == 1:
+                st.session_state.message = str(len(idList)) + ' library.'
+            else:
+                st.session_state.message  = str(len(idList)) + ' libraries.'
+            st.session_state.numberOfGroups = len(idList)
+            if st.session_state.message is not None:
+                goDelTo('showRadio')
+                rerun()
+    
+    elif st.session_state.autoDeleteStage == 'showRadio':
+        
+        selectMenu = ['Auto Delete all Content', 'Auto Delete unalocated content only', 'Disable autodelete']
+        selectCaptions = [
+            'Enables autodelete for all content in the library regardles of its allocation, one year after creation.',
+            'Enables autodelete for all unallocated content in the library, one year after creation',
+            'Disables automatic deletion for all content in the library.',
+        ]
+
+        selectedDelMode = st.radio(
+            "Please select one of the following operations:",
+            options=selectMenu,
+            captions=selectCaptions,
+            index=None,
+            key="operationRadio"
+        )
+        selectedDelIndex = selectMenu.index(selectedDelMode) + 1 if selectedDelMode else None
+        if selectedDelIndex is None:
+            disableContinueButton2 = True
+        else:
+            disableContinueButton2 = False
+
+        st.session_state.deleteModeIndex = selectedDelIndex
+        st.button('Continue', disabled= disableContinueButton2, on_click= lambda: goDelTo('ConfirmAction'))
+    
+    elif st.session_state.autoDeleteStage == 'ConfirmAction':
+        
+        st.warning(f'You are about to modify settings for **{st.session_state.message}**.')
+        st.write('Are you sure you want to continue?')
+        confC1, confC2, confC3, confC4, confC5 = st.columns([1,1,1,1,1])
+        with confC2:
+            st.button('Yes, Continue.', use_container_width=True, type='primary', on_click=lambda: goDelTo('PatchSettings'))
+        with confC4:
+            st.button('No, cancel.', use_container_width=True, type='secondary', on_click=lambda: backSession())
+
+    elif st.session_state.autoDeleteStage == 'PatchSettings':
+        delete = deleteMode.select(int(st.session_state.deleteModeIndex))
+        with st.spinner('Authenticating...'):
+            st.session_state.bearer = getBearer(
+                baseUrl,
+                customCert=st.session_state.customCert
+            )
+        patch = patchAutodelete.gui(baseUrl=baseUrl, 
                                 duration=delete.duration, 
                                 expiry=delete.expiry, 
                                 deleteType=delete.deleteType, 
-                                bearer=bearer, idList=idList, 
-                                libraryGroupsDf=libraryGroupsDf,
-                                customCert=certSelect)
-    if patch.responseError:
-        print(f'There were {len(patch.errors)} erros during the API call.')
-        saveErrorsValid = False
-        while not saveErrorsValid:
-            saveErrors = input('Do you want to save the responses? (y/n): ')
-            if saveErrors == 'y'or saveErrors == 'n':
-                saveErrorsValid = True
-        if saveErrors == 'y':
-            with open('ErrorDump.txt', 'a', encoding='UTF-8') as file:
-                for log in patch.errors:
-                    file.write(log)
-                print('Saved Errors to ErrorDump.txt')'''
+                                bearer=st.session_state.bearer, idList=st.session_state.idList, 
+                                libraryGroupsDf=st.session_state.libraryGroupsDf,
+                                customCert=st.session_state.customCert)
+        st.session_state.responseError = patch.responseError
+        st.session_state.errors = patch.errors
+        
+        if patch.responseError or not patch.responseError:
+            goDelTo('Summary')
+            rerun()
+
+    elif st.session_state.autoDeleteStage == 'Summary':
+        st.markdown(f'''
+                    ## Finished
+                    Updated delete settings for: {st.session_state.numberOfGroups} groups.
+                    ''')
+        if st.session_state.responseError:
+            st.markdown(f'There were {len(st.session_state.errors)} erros during the API call.')
+            log = ''
+            for error in st.session_state.errors:
+                log = log + error + '\n'
+            st.download_button('Save error log', data = log, file_name="Error log.txt",mime='text/txt', icon=":material/download:")

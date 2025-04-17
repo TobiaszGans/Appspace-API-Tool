@@ -28,5 +28,34 @@ def updateDefaultCert():
         Key = {"CustomCert": currentCertSetting}
         json.dump(Key, file)
 
-#def saveDefaultCert(certState):
-    
+def backToMenu(label="🔙 Back to Menu", container_ratio=[3, 1], bottom_mode=False):
+    cb1, cb2 = st.columns(container_ratio)
+    with cb2:
+        if st.button(label, use_container_width=True):
+            # Clear everything but skip rerun if bottom_mode=True
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.session_state.step = 'menu'
+            if bottom_mode:
+                st.session_state.go_back = True  # 👈 only mark, don't rerun yet
+            else:
+                st.rerun()
+            return True
+    return False
+
+def backToMenuAction():
+    st.session_state.clear()
+    st.session_state["step"] = "menu"
+    st.session_state["goBack"] = False
+    st.rerun()
+
+def backSession():
+    st.session_state.goBack = True
+
+def backToMenuButton(label="🔙 Back to Menu", container_ratio=[3, 1]):
+    cb1, cb2 = st.columns(container_ratio)
+    with cb2:
+        st.button(label, use_container_width=True, on_click=lambda: backSession())
+
+def rerun():
+    st.rerun()

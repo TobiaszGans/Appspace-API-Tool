@@ -4,7 +4,7 @@ from .auth import getBearer
 from .channel import CLIgetChannelSize, GUIgetChannelSize
 from .reservations import CLIgetBookingHistory, GUIgetBookingHistory
 from .libraries import CLIgetLibraries, CLIchangeAutoDeleteSettings, GUIgetLibraries, GUIchangeAutoDeleteSettings
-from .guiUtils import shutdown
+from .guiUtils import shutdown, backToMenuAction, backToMenuButton
 
 __all__ = [
     "generateCert",
@@ -18,7 +18,7 @@ __all__ = [
     "GUIgetChannelSize",
     "GUIgetBookingHistory",
     "GUIgetLibraries",
-    "GUIchangeAutoDeleteSettings"
-
-
+    "GUIchangeAutoDeleteSettings",
+    "backToMenuAction"
+    "backToMenuButton"
 ]

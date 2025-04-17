@@ -1,0 +1,10 @@
+[server]
+port = 8501
+
+[client]
+showErrorDetails = "none"
+
+[theme]
+base="dark"
+primaryColor="#FF4B4B"
+secondaryColor="#14AD00"

@@ -61,7 +61,7 @@ Print total channel size
 
 Required changes/adjustments
 channel.py - create a GUI function only, once CLI is finished - done!
-libraries.py - to change: create a GUI functions only, once CLI is finished - finished half
+libraries.py - to change: create a GUI functions only, once CLI is finished - done!
 reservations.py - create a GUI function only, once CLI is finished - done!
 __init__ - Once modules are ready, package it.
 
@@ -70,6 +70,12 @@ __init__ - Once modules are ready, package it.
 
 Remaining goals:
 Create a way to launch the script with gui or cli using flags - done!
-Write the gui version
+Write the gui version - done!
 
-Go back to menu button re-triggers last state - need to fix
+Go back to menu button re-triggers last state - done!
+
+-------------------------------------------------------------Done on 17.04.2025-------------------------------------------------------------
+
+Got functionality on par with CLI version
+
+Now need to figure out error handling for user input, and will be able to go back to adding more functions.

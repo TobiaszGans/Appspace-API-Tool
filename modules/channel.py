@@ -275,10 +275,10 @@ def GUIgetChannelSize(baseUrl):
             "Do you want to include that content in the calculation?",
             options=[
                 (None, "-- Select an option --"),
-                ("1", "Yes (include all)"),
-                ("2", "No (exclude all)"),
-                ("3", "Expired only"),
-                ("4", "Disabled only")
+                ("1", "Yes (Include all cards)"),
+                ("2", "No (Exclude disabled and expired cards)"),
+                ("3", "Expired only (Include active and expired cards)"),
+                ("4", "Disabled only (Include active and disabled cards)")
             ],
             format_func=lambda x: x[1],
             index=0
@@ -320,7 +320,7 @@ def GUIgetChannelSize(baseUrl):
 
         st.success(f"Total Channel size is {displaySize.number} {displaySize.unit}")
 
-        if st.button("🔙 Back to Channel Input", on_click=lambda: goTo('input')):
+        if st.button("Calculate another channel", on_click=lambda: goTo('input')):
             for key in [
                 'channelStage', 'customCert', 'channelID', 'bearer',
                 'contentDf', 'disabledInfo', 'filterOption', 'sizeResult'

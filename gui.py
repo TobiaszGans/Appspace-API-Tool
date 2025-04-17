@@ -1,5 +1,5 @@
 import streamlit as st
-from modules import shutdown, generateCert, GUIgetChannelSize, GUIgetBookingHistory, GUIgetLibraries, GUIchangeAutoDeleteSettings
+from modules import shutdown, generateCert, GUIgetChannelSize, GUIgetBookingHistory, GUIgetLibraries, GUIchangeAutoDeleteSettings, backToMenuAction, backToMenuButton
 from dotenv import load_dotenv
 import os
 
@@ -18,6 +18,9 @@ def main():
     page_title="Appspace API Tool",
     page_icon="🏠",
 )
+    if st.session_state.get("goBack"):
+        backToMenuAction()
+
     #Shutdown Button
     c1, c2 = st.columns([3, 1])
     with c2:
@@ -26,7 +29,8 @@ def main():
             os.remove('./cert.pem')
             shutdown()
 
-    # Initialize session states
+    # Initialize session states       
+    
     if 'step' not in st.session_state:
         st.session_state.step = 'menu'
     if 'selectedIndex' not in st.session_state:
@@ -78,12 +82,6 @@ def main():
             GUIgetLibraries(baseUrl=baseUrl)
         elif selectedIndex == 4:
             GUIchangeAutoDeleteSettings(baseUrl=baseUrl)
-        
-        cb1, cb2 = st.columns([3, 1])
-        with cb2:
-            if st.button("🔙 Back to Menu", use_container_width=True):
-                st.session_state.clear()  # Clears all session state variables
-                st.session_state.step = 'menu'
-                st.session_state.selectedIndex = None
-                st.rerun()
+        backToMenuButton()
+
 main()
