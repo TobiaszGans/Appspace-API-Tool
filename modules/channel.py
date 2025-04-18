@@ -63,7 +63,7 @@ class sizeCalculator:
     errorNumber: int
 
     @classmethod
-    def CLI(cls, IDlist:str, baseUrl:str, bearer:str, customCert:bool):
+    def CLI(cls, IDlist:list, baseUrl:str, bearer:str, customCert:bool):
         from tqdm import tqdm
         sizeList = []
         errorItems = False
@@ -99,7 +99,7 @@ class sizeCalculator:
 
 @dataclass
 class roundResult:
-    number: int
+    number: float
     unit: str
 
     @classmethod
@@ -288,7 +288,7 @@ def GUIgetChannelSize(baseUrl):
         else:
             disableButton2 = False
         if st.button("Continue to size calculation", disabled= disableButton2):
-            optInt = int(option[0])
+            optInt = option[0]
             st.session_state.filterOption = optInt
 
             if optInt in [2, 3, 4]:

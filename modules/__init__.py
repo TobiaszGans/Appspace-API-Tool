@@ -13,12 +13,12 @@ __all__ = [
     "CLIgetChannelSize",
     "CLIgetBookingHistory",
     "CLIgetLibraries",
-    "CLIchangeAutoDeleteSettings"
+    "CLIchangeAutoDeleteSettings",
     "shutdown",
     "GUIgetChannelSize",
     "GUIgetBookingHistory",
     "GUIgetLibraries",
     "GUIchangeAutoDeleteSettings",
-    "backToMenuAction"
+    "backToMenuAction",
     "backToMenuButton"
 ]
