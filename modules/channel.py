@@ -1,6 +1,6 @@
 from .auth import getBearer
 from .utils import clearTerminal, certChoice, validateGUID
-from .guiUtils import updateDefaultCert, getDefaultCert
+from .guiUtils import updateDefaultCert, getDefaultCert, rerun
 import json
 import requests
 from datetime import datetime
@@ -166,13 +166,18 @@ def CLIgetChannelSize(baseUrl):
         if not validGuid:
             ID = input('Incorrect format. GUID should follow xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format: ')
     customCert = certChoice()
-    bearer = getBearer(baseUrl, customCert=customCert)
+    bearer = None
+    while bearer is None:
+        bearer = getBearer(baseUrl, customCert=customCert)
+        if bearer is None:
+            print('Failed to authenticate, probably due to certificate error.')
+            customCert = certChoice()
     channel = getChannelInfo(ID, baseUrl, bearer, customCert)
-    ChannelDf = parseChannel(json.dumps(channel))
-    if ChannelDf.empty:
+    channelDf = parseChannel(json.dumps(channel))
+    if channelDf.empty:
         print('There is no content in the selected channel')
         quit()
-    contentDF = extractContentToDf(ChannelDf)
+    contentDF = extractContentToDf(channelDf)
     disabled = disabledInfo.fromDf(contentDF)
     if disabled.disabledContent or disabled.expiredContent:
         if disabled.disabledContent and not disabled.expiredContent:
@@ -217,6 +222,7 @@ def GUIgetChannelSize(baseUrl):
     #initialize input stage
     if 'channelStage' not in st.session_state:
         st.session_state.channelStage = 'input'
+        st.session_state.certError = False
 
     # INPUT STAGE
     if st.session_state.channelStage == 'input':
@@ -225,9 +231,12 @@ def GUIgetChannelSize(baseUrl):
                                value=getDefaultCert(), 
                                key='useCustomCert',
                                on_change=updateDefaultCert)
+        if st.session_state.certError:
+            st.error('Failed to authenticate, probably due to certificate error.')
         channelID = st.text_input('Please provide channel ID: ')
+        st.session_state.channelID = channelID.strip()
         guidvalid = validateGUID(channelID)
-        if channelID.strip() == "":
+        if st.session_state.channelID == "":
             st.error("Channel ID is required.")
             disableButton = True
         elif not guidvalid:
@@ -236,17 +245,24 @@ def GUIgetChannelSize(baseUrl):
         else:
             disableButton = False
         st.session_state.customCert = certToggle
-        st.session_state.channelID = channelID.strip()
         st.button('Get channel Size', on_click=lambda: goTo('fetch'), disabled=disableButton)
     
     # FETCH STAGE
     elif st.session_state.channelStage == 'fetch':
         if 'fetchDone' not in st.session_state:
-            with st.spinner("Authenticating..."):
+           with st.spinner("Authenticating..."):
+            st.session_state.bearer = None
+            while st.session_state.bearer is None:
                 st.session_state.bearer = getBearer(
-                    baseUrl,
-                    customCert=st.session_state.customCert
+                baseUrl,
+                customCert=st.session_state.customCert
                 )
+                if st.session_state.bearer is None:
+                    st.session_state.certError = True
+                    goTo('input')
+                    rerun()
+                else:
+                    st.session_state.certError = False
             with st.spinner("Getting channel info..."):
                 rawChannel = getChannelInfo(
                     st.session_state.channelID,

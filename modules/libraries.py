@@ -106,7 +106,12 @@ def CLIgetLibraries(baseUrl):
     print('Welcome to get Libraries.')
     customCert = certChoice()
     print('Authenticating...')
-    bearer = getBearer(baseUrl, customCert=customCert)
+    bearer = None
+    while bearer is None:
+        bearer = getBearer(baseUrl, customCert=customCert)
+        if bearer is None:
+            print('Failed to authenticate, probably due to certificate error.')
+            customCert = certChoice()
     librariesDF = getLibrariesDF.cli(baseUrl=baseUrl, bearer=bearer, customCert=customCert).librariesdf
     outputName = input('\nPlease provide the name for the output CSV file: ')
     finalName = saveDfToCsv(df=librariesDF, fname=outputName)
@@ -120,6 +125,7 @@ def GUIgetLibraries(baseUrl):
     #Initialize
     if 'libraryDownloads' not in st.session_state:
         st.session_state.libraryDownloads = 'input'
+        st.session_state.certError = False
 
     if st.session_state.libraryDownloads == 'input':
         st.title('Welcome to get Libraries.')
@@ -128,14 +134,25 @@ def GUIgetLibraries(baseUrl):
                                key='useCustomCert',
                                on_change=updateDefaultCert)
         st.session_state.customCert = certToggle
+        if st.session_state.certError:
+            st.error('Failed to authenticate, probably due to certificate error.')
         st.button('Download Libraries', on_click= lambda: goTo('download')) 
 
     elif st.session_state.libraryDownloads == 'download':
         with st.spinner("Authenticating..."):
-            st.session_state.bearer = getBearer(
+            st.session_state.bearer = None
+            while st.session_state.bearer is None:
+                st.session_state.bearer = getBearer(
                 baseUrl,
                 customCert=st.session_state.customCert
-            )
+                )
+                if st.session_state.bearer is None:
+                    st.session_state.certError = True
+                    goTo('input')
+                    rerun()
+                else:
+                    st.session_state.certError = False
+            
         librariesDF = getLibrariesDF.gui(baseUrl=baseUrl, bearer=st.session_state.bearer, customCert=st.session_state.customCert).librariesdf
         st.session_state.file = librariesDF.to_csv().encode("utf-8")
         if st.session_state.file is not None:
@@ -313,7 +330,12 @@ def CLIchangeAutoDeleteSettings(baseUrl):
             consentValid = False
     certSelect = certChoice()
     print('Authenticating.')
-    bearer = getBearer(baseUrl, customCert=certSelect)
+    bearer = None
+    while bearer is None:
+        bearer = getBearer(baseUrl, customCert=certSelect)
+        if bearer is None:
+            print('Failed to authenticate, probably due to certificate error.')
+            certSelect = certChoice()
     patch = patchAutodelete.cli(baseUrl=baseUrl, 
                                 duration=delete.duration, 
                                 expiry=delete.expiry, 
@@ -342,6 +364,7 @@ def GUIchangeAutoDeleteSettings(baseUrl):
     # Initialize input stage
     if 'autoDeleteStage' not in st.session_state:
         st.session_state.autoDeleteStage = 'input'
+        st.session_state.certError = False
 
     # INPUT STAGE
     if st.session_state.autoDeleteStage == 'input':
@@ -350,6 +373,8 @@ def GUIchangeAutoDeleteSettings(baseUrl):
                                value=getDefaultCert(), 
                                key='useCustomCert',
                                on_change=updateDefaultCert)
+        if st.session_state.certError:
+            st.error('Failed to authenticate, probably due to certificate error.')
         file = st.file_uploader('Upload CSV file', type='csv')
 
         if file is None:
@@ -434,11 +459,19 @@ def GUIchangeAutoDeleteSettings(baseUrl):
 
     elif st.session_state.autoDeleteStage == 'PatchSettings':
         delete = deleteMode.select(int(st.session_state.deleteModeIndex))
-        with st.spinner('Authenticating...'):
-            st.session_state.bearer = getBearer(
+        with st.spinner("Authenticating..."):
+            st.session_state.bearer = None
+            while st.session_state.bearer is None:
+                st.session_state.bearer = getBearer(
                 baseUrl,
                 customCert=st.session_state.customCert
-            )
+                )
+                if st.session_state.bearer is None:
+                    st.session_state.certError = True
+                    goDelTo('input')
+                    rerun()
+                else:
+                    st.session_state.certError = False
         patch = patchAutodelete.gui(baseUrl=baseUrl, 
                                 duration=delete.duration, 
                                 expiry=delete.expiry, 

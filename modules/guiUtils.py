@@ -4,15 +4,16 @@ import os
 import json
 import streamlit as st
 import time
+from pathlib import Path
+
 
 def shutdown():
     # Close streamlit browser tab
+    os.remove('./cert.pem')
     keyboard.press_and_release('ctrl+w')
-    time.sleep(100)
     # Terminate streamlit python process
-    pid = os.getpid()
-    p = psutil.Process(pid)
-    p.terminate()
+    time.sleep(2)
+    os._exit(0)
 
 def getDefaultCert():
     try:

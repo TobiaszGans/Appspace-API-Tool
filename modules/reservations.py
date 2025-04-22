@@ -1,5 +1,5 @@
 from .utils import clearTerminal, certChoice, saveDfToCsv, validateGUID
-from .guiUtils import updateDefaultCert, getDefaultCert
+from .guiUtils import updateDefaultCert, getDefaultCert, rerun
 from .auth import getBearer
 from datetime import datetime
 import requests
@@ -169,7 +169,12 @@ def CLIgetBookingHistory(baseUrl):
     endTime = validateDateTime(input('Please enter end time date and time in the following format yyyy-mm-ddThh:mm:ss or type now: ')) + 'Z'
     certMode = certChoice()
     print('Authenticating...')
-    bearer = getBearer(baseUrl, customCert=certMode)
+    bearer = None
+    while bearer is None:
+        bearer = getBearer(baseUrl, customCert=certMode)
+        if bearer is None:
+            print('Failed to authenticate, probably due to certificate error.')
+            certMode = certChoice()
     fullJson = getBookings.cli(bearer=bearer, resourceID=resourceIDs, startTime=startTime, endTime=endTime, customCert=certMode, baseUrl=baseUrl).fullJson
     processed = processReservations.process(fullJson)
     if not processed.responseNotEmpty:
@@ -200,6 +205,7 @@ def GUIgetBookingHistory(baseUrl):
     # Initialize input stage
     if 'resStage' not in st.session_state:
         st.session_state.resStage = 'input'
+        st.session_state.certError = False
 
     # INPUT STAGE
     if st.session_state.resStage == 'input':
@@ -208,7 +214,10 @@ def GUIgetBookingHistory(baseUrl):
                                value=getDefaultCert(), 
                                key='useCustomCert',
                                on_change=updateDefaultCert)
+        if st.session_state.certError:
+            st.error('Failed to authenticate, probably due to certificate error.')
         resourceID = st.text_input('Please enter resource ID/IDs: ')
+        st.session_state.resourceID = resourceID
         guidList = resourceID.split(',')
         invalidguids = []
         invalidguidsBool = False
@@ -232,7 +241,7 @@ def GUIgetBookingHistory(baseUrl):
         startDateTime = datetime.combine(startDate, startTime)
         endDateTime = datetime.combine(endDate, endTime)
         
-        if resourceID.strip() == "":
+        if st.session_state.resourceID.strip() == "":
             st.error("Resource ID/IDs are required.")
             dissableFetchButton = True
         elif invalidguidsBool:
@@ -249,17 +258,25 @@ def GUIgetBookingHistory(baseUrl):
         st.session_state.startDateTime = startDateTimeStr
         st.session_state.endDateTime = endDateTimeStr
         st.session_state.customCert = certToggle
-        st.session_state.resourceID = resourceID
+        
 
         st.button('Fetch reservations', disabled=dissableFetchButton, on_click= lambda: goTo('download'))
     
     #Download Stage
     elif st.session_state.resStage == 'download':
         with st.spinner("Authenticating..."):
-            st.session_state.bearer = getBearer(
+            st.session_state.bearer = None
+            while st.session_state.bearer is None:
+                st.session_state.bearer = getBearer(
                 baseUrl,
                 customCert=st.session_state.customCert
-            )
+                )
+                if st.session_state.bearer is None:
+                    st.session_state.certError = True
+                    goTo('input')
+                    rerun()
+                else:
+                    st.session_state.certError = False
         fullJson = getBookings.gui(bearer=st.session_state.bearer, resourceID=st.session_state.resourceID, startTime=st.session_state.startDateTime, endTime=st.session_state.endDateTime, customCert=st.session_state.customCert, baseUrl=baseUrl).fullJson
         processed = processReservations.process(fullJson)
         if not processed.responseNotEmpty:

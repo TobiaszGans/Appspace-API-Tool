@@ -19,9 +19,15 @@ def getBearer(baseUrl:str, customCert:bool) -> str:
         "refreshToken": credentials[1]
     }
     if customCert:
-        initResponse = requests.post(url = apiUrl, headers=authHeaders, json = authBody, verify= 'cert.pem')
+        try:
+            initResponse = requests.post(url = apiUrl, headers=authHeaders, json = authBody, verify= 'cert.pem')
+        except:
+            return None
     else:
-        initResponse = requests.post(url = apiUrl, headers=authHeaders, json = authBody)
+        try:
+            initResponse = requests.post(url = apiUrl, headers=authHeaders, json = authBody)
+        except:
+            return None
     
     divideResponse = initResponse.text.split()
     bearer = "Bearer " + divideResponse[2].replace('"','')

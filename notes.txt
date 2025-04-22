@@ -92,3 +92,9 @@ Booking history response - done!
 auto-delete - Validate GUIDs in the list? - done!
 
 -------------------------------------------------------------Done on 22.04.2025-------------------------------------------------------------
+
+cert error mitigations
+Channel - done!
+reservations - done!
+libraries - done!
+autodelete - done! 

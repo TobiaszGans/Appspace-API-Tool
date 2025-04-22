@@ -2,6 +2,7 @@ import streamlit as st
 from modules import shutdown, generateCert, GUIgetChannelSize, GUIgetBookingHistory, GUIgetLibraries, GUIchangeAutoDeleteSettings, backToMenuAction, backToMenuButton
 from dotenv import load_dotenv
 import os
+import threading
 
 def handleContinue(index):
     st.session_state.selectedIndex = index
@@ -12,12 +13,13 @@ def main():
     subdomain = os.getenv('subdomain')
     baseUrl = f'https://{subdomain}.cloud.appspace.com/api/v3/'
     apiUrl = baseUrl +'/authorization/token'
-    generateCert(apiUrl)
+    
 
     st.set_page_config(
     page_title="Appspace API Tool",
     page_icon="🏠",
 )
+    threading.Thread(target=generateCert, args=(apiUrl,), daemon=True).start()
     if st.session_state.get("goBack"):
         backToMenuAction()
 
@@ -26,7 +28,6 @@ def main():
     with c2:
         exit = st.button('Exit Application', use_container_width=True)
         if exit:
-            os.remove('./cert.pem')
             shutdown()
 
     # Initialize session states       
