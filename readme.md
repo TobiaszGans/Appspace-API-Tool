@@ -80,8 +80,14 @@ subdomain = "api"
 .venv\Scripts\activate
 ```
 3. Run the script:
+
+For command line interface use:
 ```
-py main.py
+py run.py -cli
+```
+For a graphical interface use:
+```
+py run.py -gui
 ```
 4. Follow the on-screen instructions.
 
@@ -98,7 +104,14 @@ You can create a `.bat` file to automate the steps above (works on most Windows 
 ```bat
 @echo off
 .venv\Scripts\activate
-py main.py
+py run.py -gui
+pause
+```
+or
+```bat
+@echo off
+.venv\Scripts\activate
+py run.py -cli
 pause
 ```
 3. Double-click run.bat to launch the script.
