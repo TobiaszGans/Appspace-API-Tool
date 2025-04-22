@@ -128,7 +128,7 @@ def GUIgetLibraries(baseUrl):
                                key='useCustomCert',
                                on_change=updateDefaultCert)
         st.session_state.customCert = certToggle
-        st.button('Fetch reservations', on_click= lambda: goTo('download')) 
+        st.button('Download Libraries', on_click= lambda: goTo('download')) 
 
     elif st.session_state.libraryDownloads == 'download':
         with st.spinner("Authenticating..."):
