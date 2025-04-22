@@ -1,4 +1,4 @@
-from .utils import clearTerminal, certChoice, saveDfToCsv
+from .utils import clearTerminal, certChoice, saveDfToCsv, validateGUID
 from .guiUtils import updateDefaultCert, getDefaultCert
 from .auth import getBearer
 from datetime import datetime
@@ -43,6 +43,7 @@ class getBookings:
         responseJson = json.loads(response.text)
         size = responseJson["size"]
         limit = int(responseJson["limit"])
+        itmes = responseJson["items"]
         if size > limit:
             paging = True
             fullPages = size // limit
@@ -122,28 +123,58 @@ class getBookings:
 class processReservations:
     resourceDF: pd.DataFrame
     autoCancelDF: pd.DataFrame
+    responseNotEmpty: bool
 
     @classmethod
     def process(cls, fullJson):
         resourceDF = pd.json_normalize(fullJson)
-        resourceDF['resourceName'] = resourceDF['resources'].apply(lambda x: x[0]['resourceName'] if x else None)
-        selectColumns = ['id','reservationId','status','title','startTimeZone','startAt','endAt','createdAt','updatedAt','provider.organizer.username', 'resourceName']
-        resourceDF = resourceDF[selectColumns]
-        autoCancelDF = resourceDF[resourceDF['title'].str.startswith('[Room released due to no-show]')]
-        return cls(resourceDF, autoCancelDF)
+        if resourceDF.empty:
+            responseNotEmpty = False
+            resourceDF = pd.json_normalize([])
+            autoCancelDF = pd.json_normalize([])
+            return cls(resourceDF, autoCancelDF, responseNotEmpty)
+        else:
+            resourceDF['resourceName'] = resourceDF['resources'].apply(lambda x: x[0]['resourceName'] if x else None)
+            selectColumns = ['id','reservationId','status','title','startTimeZone','startAt','endAt','createdAt','updatedAt','provider.organizer.username', 'resourceName']
+            resourceDF = resourceDF[selectColumns]
+            autoCancelDF = resourceDF[resourceDF['title'].str.startswith('[Room released due to no-show]')]
+            responseNotEmpty = True
+            return cls(resourceDF, autoCancelDF, responseNotEmpty)
 
 
 def CLIgetBookingHistory(baseUrl):
     clearTerminal()
     print('Welcome to get booking history.')
-    resourceID = input('Please enter resource ID/IDs: ')
+    resourceIDs = input('Please enter resource ID/IDs: ')
+    guidValid = False
+    guidList = resourceIDs.split(',')
+    while not guidValid:
+        invalidguids = []
+        invalidguidsBool = False
+        for guid in guidList:
+            validateSingleID = validateGUID(guid)
+            if not validateSingleID:
+                invalidguidsBool = True
+                invalidguids.append(guid)
+        if invalidguidsBool:
+            print('Incorrect GUIDs:')
+            for guid in invalidguids:
+                print(guid)
+            print('GUID needs to follow xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format.')
+            resourceIDs = input('Please enter resource ID/IDs: ')
+            guidList = resourceIDs.split(',')
+        else:
+            guidValid = True
     startTime = validateDateTime(input('Please enter start date and time in the following format yyyy-mm-ddThh:mm:ss: ')) + 'Z'
     endTime = validateDateTime(input('Please enter end time date and time in the following format yyyy-mm-ddThh:mm:ss or type now: ')) + 'Z'
     certMode = certChoice()
     print('Authenticating...')
     bearer = getBearer(baseUrl, customCert=certMode)
-    fullJson = getBookings.cli(bearer=bearer, resourceID=resourceID, startTime=startTime, endTime=endTime, customCert=certMode, baseUrl=baseUrl).fullJson
+    fullJson = getBookings.cli(bearer=bearer, resourceID=resourceIDs, startTime=startTime, endTime=endTime, customCert=certMode, baseUrl=baseUrl).fullJson
     processed = processReservations.process(fullJson)
+    if not processed.responseNotEmpty:
+        print('There are no items in the reservation history')
+        quit()
     
     if not processed.autoCancelDF.empty:
         print('Found Auto released meetings')
@@ -178,6 +209,18 @@ def GUIgetBookingHistory(baseUrl):
                                key='useCustomCert',
                                on_change=updateDefaultCert)
         resourceID = st.text_input('Please enter resource ID/IDs: ')
+        guidList = resourceID.split(',')
+        invalidguids = []
+        invalidguidsBool = False
+        for guid in guidList:
+            validateSingleID = validateGUID(guid)
+            if not validateSingleID:
+                invalidguidsBool = True
+                invalidguids.append(guid)
+        if invalidguidsBool:
+            incorrectGuis = ''
+            for guid in invalidguids:
+                incorrectGuis = incorrectGuis + guid + ' ,'
         dates, times = st.columns([1,1])
         with dates:
             startDate = st.date_input(label= "Reservations start date")
@@ -191,6 +234,10 @@ def GUIgetBookingHistory(baseUrl):
         
         if resourceID.strip() == "":
             st.error("Resource ID/IDs are required.")
+            dissableFetchButton = True
+        elif invalidguidsBool:
+            st.error(f'Incorrect GUIDs: {incorrectGuis}')
+            st.warning('GUID needs to follow xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format.')
             dissableFetchButton = True
         elif startDateTime >= endDateTime:
             st.error('Start date and time must be before the end date and time')
@@ -215,7 +262,17 @@ def GUIgetBookingHistory(baseUrl):
             )
         fullJson = getBookings.gui(bearer=st.session_state.bearer, resourceID=st.session_state.resourceID, startTime=st.session_state.startDateTime, endTime=st.session_state.endDateTime, customCert=st.session_state.customCert, baseUrl=baseUrl).fullJson
         processed = processReservations.process(fullJson)
-        if not processed.autoCancelDF.empty:
+        if not processed.responseNotEmpty:
+            st.error('There are no items in the reservation history.')
+            if st.button("Go Back to input", on_click=lambda: goTo('input')):
+                for key in [
+                    'resStage', 'customCert', 'resourceID', 'bearer',
+                    'contentDf'
+                ]:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
+        elif not processed.autoCancelDF.empty:
             st.session_state.autorelease = processed.autoCancelDF
             st.session_state.reservations = processed.resourceDF
             st.session_state.resStage = 'autorelease'

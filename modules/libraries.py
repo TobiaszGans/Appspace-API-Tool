@@ -1,4 +1,4 @@
-from .utils import clearTerminal, certChoice, saveDfToCsv
+from .utils import clearTerminal, certChoice, saveDfToCsv, validateGUID
 from .auth import getBearer
 from .guiUtils import getDefaultCert, updateDefaultCert, backToMenuButton, backToMenuAction, backSession, rerun
 import json
@@ -247,6 +247,7 @@ def CLIchangeAutoDeleteSettings(baseUrl):
     while not filePathValid:
         filePath = input('Please enter the file path to your .csv file: ')
         extention = filePath[-4:]
+        print('Extention ' + f"'{extention}'")
         if extention == ".csv":
             filePathValid = os.path.isfile(filePath)
             if not filePathValid:
@@ -280,6 +281,24 @@ def CLIchangeAutoDeleteSettings(baseUrl):
         message = str(len(idList)) + ' library.'
     else:
         message  = str(len(idList)) + ' libraries.'
+    guidValid = False
+    while not guidValid:
+        invalidguids = []
+        invalidguidsBool = False
+        for guid in idList:
+            validateSingleID = validateGUID(guid)
+            if not validateSingleID:
+                invalidguidsBool = True
+                invalidguids.append(guid)
+        if invalidguidsBool:
+            print('Incorrect GUIDs:')
+            for guid in invalidguids:
+                print(guid)
+            print('GUID needs to follow xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format.')
+            print('Please resolve issue in the CSV file')
+            quit()
+        else:
+            guidValid = True
     print(f'You are about to modify settings for {message}')
     consentValid = False
     while not consentValid:
@@ -348,6 +367,27 @@ def GUIchangeAutoDeleteSettings(baseUrl):
             idList = libraryGroupsDf['id'].tolist()
             st.session_state.idList = idList
             st.session_state.libraryGroupsDf = libraryGroupsDf
+            invalidguids = []
+            invalidguidsBool = False
+            for guid in idList:
+                validateSingleID = validateGUID(guid)
+                if not validateSingleID:
+                    invalidguidsBool = True
+                    invalidguids.append(guid)
+        if invalidguidsBool:
+            st.error('Incorrect GUIDs:')
+            for guid in invalidguids:
+                st.write(guid)
+            st.warning('GUID needs to follow xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format. Please resolve issue in the CSV file.')
+            if st.button("Go Back to input", on_click=lambda: goDelTo('input')):
+                for key in [
+                    'autoDeleteStage', 'customCert', 'groups', 'bearer',
+                ]:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
+        else:
+            guidValid = True
             if len(idList) == 1:
                 st.session_state.message = str(len(idList)) + ' library.'
             else:

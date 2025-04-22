@@ -79,3 +79,16 @@ Go back to menu button re-triggers last state - done!
 Got functionality on par with CLI version
 
 Now need to figure out error handling for user input, and will be able to go back to adding more functions.
+
+Input validation ways:
+- GUIDs are supposed to be the same length, let's see the format as well - done!
+- Analyze if the return is empty - done!
+
+Inputs to validate:
+Channel GUID on CLI and GUI - done!
+Channel response - done!
+Booking history GUID/GUIDs - done!
+Booking history response - done!
+auto-delete - Validate GUIDs in the list? - done!
+
+-------------------------------------------------------------Done on 22.04.2025-------------------------------------------------------------

@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import re
 
 def clearTerminal():
     os.system('cls' if os.name=='nt' else 'clear')
@@ -23,3 +24,7 @@ def saveDfToCsv(df:pd.DataFrame, fname:str):
         fname = fname + '.csv'
     df.to_csv(fname)
     return fname
+
+def validateGUID(guid):
+    guidVerify = re.match(r'[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}$' , guid)
+    return guidVerify

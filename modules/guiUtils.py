@@ -3,10 +3,12 @@ import psutil
 import os
 import json
 import streamlit as st
+import time
 
 def shutdown():
     # Close streamlit browser tab
     keyboard.press_and_release('ctrl+w')
+    time.sleep(100)
     # Terminate streamlit python process
     pid = os.getpid()
     p = psutil.Process(pid)

@@ -1,5 +1,5 @@
 from .sslUtils import generateCert
-from .utils import clearTerminal
+from .utils import clearTerminal, validateGUID
 from .auth import getBearer
 from .channel import CLIgetChannelSize, GUIgetChannelSize
 from .reservations import CLIgetBookingHistory, GUIgetBookingHistory
@@ -19,6 +19,7 @@ __all__ = [
     "GUIgetBookingHistory",
     "GUIgetLibraries",
     "GUIchangeAutoDeleteSettings",
-    "backToMenuAction"
-    "backToMenuButton"
+    "backToMenuAction",
+    "backToMenuButton",
+    'validateGUID'
 ]

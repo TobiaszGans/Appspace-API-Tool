@@ -1,5 +1,5 @@
 from .auth import getBearer
-from .utils import clearTerminal, certChoice
+from .utils import clearTerminal, certChoice, validateGUID
 from .guiUtils import updateDefaultCert, getDefaultCert
 import json
 import requests
@@ -160,10 +160,18 @@ def CLIgetChannelSize(baseUrl):
     clearTerminal()
     print('Welcome to get channel size.')
     ID = input('Please provide channel ID: ')
+    validGuid = False
+    while not validGuid:
+        validGuid = validateGUID(ID)
+        if not validGuid:
+            ID = input('Incorrect format. GUID should follow xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format: ')
     customCert = certChoice()
     bearer = getBearer(baseUrl, customCert=customCert)
     channel = getChannelInfo(ID, baseUrl, bearer, customCert)
     ChannelDf = parseChannel(json.dumps(channel))
+    if ChannelDf.empty:
+        print('There is no content in the selected channel')
+        quit()
     contentDF = extractContentToDf(ChannelDf)
     disabled = disabledInfo.fromDf(contentDF)
     if disabled.disabledContent or disabled.expiredContent:
@@ -218,8 +226,12 @@ def GUIgetChannelSize(baseUrl):
                                key='useCustomCert',
                                on_change=updateDefaultCert)
         channelID = st.text_input('Please provide channel ID: ')
+        guidvalid = validateGUID(channelID)
         if channelID.strip() == "":
             st.error("Channel ID is required.")
+            disableButton = True
+        elif not guidvalid:
+            st.error("GUID needs to follow xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx format.")
             disableButton = True
         else:
             disableButton = False
@@ -243,13 +255,24 @@ def GUIgetChannelSize(baseUrl):
                     st.session_state.customCert
                 )
                 channelDf = parseChannel(json.dumps(rawChannel))
-                contentDf = extractContentToDf(channelDf)
-                st.session_state.contentDf = contentDf
+                if channelDf.empty:
+                    st.error('There is no content in the selected channel')
+                    if st.button("Calculate another channel", on_click=lambda: goTo('input')):
+                        for key in [
+                            'channelStage', 'customCert', 'channelID', 'bearer',
+                            'contentDf', 'disabledInfo', 'filterOption', 'sizeResult'
+                        ]:
+                            if key in st.session_state:
+                                del st.session_state[key]
+                            st.rerun()
+                else:
+                    contentDf = extractContentToDf(channelDf)
+                    st.session_state.contentDf = contentDf
 
-                st.session_state.disabledInfo = disabledInfo.fromDf(contentDf)
+                    st.session_state.disabledInfo = disabledInfo.fromDf(contentDf)
 
-            st.session_state.fetchDone = True
-            st.rerun()
+                    st.session_state.fetchDone = True
+                    st.rerun()
 
         else:
             d = st.session_state.disabledInfo
