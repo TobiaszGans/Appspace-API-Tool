@@ -19,7 +19,10 @@ def main():
     page_title="Appspace API Tool",
     page_icon="🏠",
 )
-    threading.Thread(target=generateCert, args=(apiUrl,), daemon=True).start()
+    if 'cert' not in st.session_state:
+        threading.Thread(target=generateCert, args=(apiUrl,), daemon=True).start()
+        st.session_state.cert = True
+
     if st.session_state.get("goBack"):
         backToMenuAction()
 
